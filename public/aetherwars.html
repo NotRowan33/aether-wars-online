@@ -49,7 +49,8 @@
         .card.disabled:hover { transform: none; box-shadow: 0 0 10px rgba(0,0,0,0.5); border-color: var(--border-color); }
         .card-name { font-size: 1em; font-weight: 700; text-align: center; }
         .card-type { font-size: 0.7em; font-style: italic; color: var(--primary-glow); }
-        .card-effect { font-size: 0.8em; text-align: center; }
+        /* This CSS rule is the fix for text overflow */
+        .card-effect { font-size: 0.75em; text-align: center; }
         .card.aether-shard { border-color: #00ffff; } .card.attack { border-color: #ff4141; } .card.defense { border-color: #3dff3d; } .card.special { border-color: #ff00ff; }
         .game-controls, .game-over-buttons { display: none; margin-top: 15px; }
         .game-controls.active, .game-over-buttons.active { display: block; }
@@ -66,8 +67,8 @@
     <div id="menu-screen" class="screen active">
         <div class="container">
             <h1 class="title">Cosmic Rift</h1>
-            <button id="single-player-btn" class="button">Single Player (vs AI)</button>
             <button id="multiplayer-btn" class="button">Multiplayer</button>
+            <button id="single-player-btn" class="button">Single Player (vs AI)</button>
         </div>
     </div>
 
@@ -152,10 +153,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // --- SOCKET.IO ---
-    // Establish connection with the server.
-    // IMPORTANT: When you host this online, you might need to change this
-    // to your server's URL, e.g., const socket = io('https://your-game-url.com');
     const socket = io();
 
     // --- DOM ELEMENTS ---
@@ -178,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const backToMainBtns = document.querySelectorAll('.back-to-main');
     const backToMultiplayerBtns = document.querySelectorAll('.back-to-multiplayer');
 
-    const gameContainer = document.getElementById('game-container');
     const playerNameEl = document.getElementById('player-name');
     const opponentNameEl = document.getElementById('opponent-name');
     const playerScoreEl = document.getElementById('player-score');
@@ -195,9 +191,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameOverButtons = document.getElementById('game-over-buttons');
     const mainMenuBtn = document.getElementById('main-menu-btn');
 
-    // --- CLIENT-SIDE GAME STATE ---
+    // --- CLIENT-SIDE STATE ---
     let myPlayerNum = null;
-    let currentRoomId = null;
 
     // --- SCREEN MANAGEMENT ---
     function showScreen(screenName) {
@@ -205,8 +200,8 @@ document.addEventListener('DOMContentLoaded', () => {
         screens[screenName].classList.add('active');
     }
 
-    // --- UI EVENT LISTENERS ---
-    singlePlayerBtn.addEventListener('click', () => alert('Single player mode is coming soon!'));
+    // --- EVENT LISTENERS ---
+    singlePlayerBtn.addEventListener('click', () => alert('This multiplayer-focused version does not include a single-player AI.'));
     multiplayerBtn.addEventListener('click', () => showScreen('multiplayer'));
     hostGameBtn.addEventListener('click', () => showScreen('host'));
     joinGameBtn.addEventListener('click', () => showScreen('join'));
@@ -215,77 +210,53 @@ document.addEventListener('DOMContentLoaded', () => {
     
     gamemodeButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-            const mode = btn.dataset.mode;
-            socket.emit('hostGame', { gameMode: mode });
+            socket.emit('hostGame', { gameMode: btn.dataset.mode });
         });
     });
 
     submitJoinBtn.addEventListener('click', () => {
-        const roomId = gameIdInput.value.trim();
+        const roomId = gameIdInput.value.trim().toUpperCase();
         if (roomId) {
-            socket.emit('joinGame', { roomId: roomId });
+            socket.emit('joinGame', { roomId });
         }
     });
 
-    // --- GAME ACTION EMITTERS ---
-    deckEl.addEventListener('click', () => {
-        // Client no longer checks for turn validity, server will do it.
-        socket.emit('playerAction', { action: 'drawCard' });
-    });
-
-    endTurnBtn.addEventListener('click', () => {
-        socket.emit('playerAction', { action: 'endTurn' });
-    });
-    
-    quitGameBtn.addEventListener('click', () => {
-        socket.emit('playerAction', { action: 'quit' });
-        returnToMenu();
-    });
-
+    deckEl.addEventListener('click', () => socket.emit('playerAction', { action: 'drawCard' }));
+    endTurnBtn.addEventListener('click', () => socket.emit('playerAction', { action: 'endTurn' }));
+    quitGameBtn.addEventListener('click', returnToMenu);
     mainMenuBtn.addEventListener('click', returnToMenu);
 
-    function playActionCard(card, index) {
+    function playActionCard(index) {
         socket.emit('playerAction', { action: 'playCard', cardIndex: index });
     }
 
     function returnToMenu() {
+        socket.emit('playerAction', { action: 'quit' });
         showScreen('menu');
-        // Reset local state
         myPlayerNum = null;
-        currentRoomId = null;
     }
 
-    // --- SOCKET.IO EVENT HANDLERS ---
+    // --- SOCKET.IO HANDLERS ---
     socket.on('gameCreated', (data) => {
-        currentRoomId = data.roomId;
         gameIdDisplay.textContent = data.roomId;
         showScreen('waiting');
     });
 
     socket.on('gameUpdate', (data) => {
-        const { gameState, message, activePlayer, gameIsOver } = data;
-        
-        // Determine who is who
-        const me = gameState.players[socket.id];
+        const { me, opponent, deckCount, message, activePlayer, gameIsOver } = data;
         myPlayerNum = me.playerNum;
-        const opponent = Object.values(gameState.players).find(p => p.socketId !== socket.id);
-
-        // Update UI based on received game state
-        updateUI(gameState, message, activePlayer, gameIsOver, opponent);
+        updateUI(me, opponent, deckCount, message, activePlayer, gameIsOver);
     });
     
     socket.on('gameStart', (data) => {
         showScreen('game');
-        const { gameState, message, activePlayer, gameIsOver } = data;
-        const opponent = Object.values(gameState.players).find(p => p.socketId !== socket.id);
-        updateUI(gameState, message, activePlayer, gameIsOver, opponent);
+        const { me, opponent, deckCount, message, activePlayer, gameIsOver } = data;
+        myPlayerNum = me.playerNum;
+        updateUI(me, opponent, deckCount, message, activePlayer, gameIsOver);
     });
 
     socket.on('playerLeft', (data) => {
         showMessage(data.message);
-        endTurnBtn.disabled = true;
-        deckEl.classList.add('disabled');
-        playerHandEl.querySelectorAll('.card').forEach(c => c.classList.add('disabled'));
         gameOverButtons.classList.add('active');
         gameControls.classList.remove('active');
     });
@@ -296,75 +267,64 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- MASTER UI UPDATE FUNCTION ---
-    function updateUI(gameState, message, activePlayer, gameIsOver, opponent) {
-        const me = gameState.players[socket.id];
-        if (!me) return; // Don't update if player data isn't available yet
+    function updateUI(me, opponent, deckCount, message, activePlayer, gameIsOver) {
+        if (!me) return;
 
-        // Update scores and names
-        playerNameEl.textContent = `Player ${me.playerNum}`;
-        playerScoreEl.textContent = me.status.darkmatter > 0 ? '??' : me.score;
+        // Scores and Names
+        playerNameEl.textContent = `You (Player ${me.playerNum})`;
+        playerScoreEl.textContent = opponent.status.darkmatter > 0 ? '??' : me.score;
         playerStatusEl.textContent = getStatusText(me.status);
 
         if (opponent) {
-            opponentNameEl.textContent = `Player ${opponent.playerNum}`;
-            opponentScoreEl.textContent = opponent.status.darkmatter > 0 ? '??' : opponent.score;
+            opponentNameEl.textContent = `Opponent (Player ${opponent.playerNum})`;
+            opponentScoreEl.textContent = me.status.darkmatter > 0 ? '??' : opponent.score;
             opponentStatusEl.textContent = getStatusText(opponent.status);
-            // Apply dark matter blur effect
-            playerScoreEl.classList.toggle('dark-matter-active', opponent.status.darkmatter > 0);
-            opponentScoreEl.classList.toggle('dark-matter-active', me.status.darkmatter > 0);
-        } else {
-            opponentNameEl.textContent = 'Opponent';
-            opponentScoreEl.textContent = '0';
-            opponentStatusEl.textContent = '';
         }
 
-        // Update deck
-        deckCountEl.textContent = gameState.deck.length;
+        playerScoreEl.classList.toggle('dark-matter-active', opponent.status.darkmatter > 0);
+        opponentScoreEl.classList.toggle('dark-matter-active', me.status.darkmatter > 0);
 
-        // Update hand
+        // Deck
+        deckCountEl.textContent = deckCount;
+
+        // Hand
         playerHandEl.innerHTML = '';
         const isMyTurn = activePlayer === myPlayerNum;
-        deckEl.classList.toggle('disabled', !isMyTurn || me.hasDrawn);
+        deckEl.classList.toggle('disabled', !isMyTurn || me.hasDrawn || gameIsOver);
 
         me.hand.forEach((card, index) => {
             const cardEl = document.createElement('div');
             cardEl.classList.add('card', card.type);
-            // A card can be played if it's my turn and I haven't played an action card yet
-            const canPlay = isMyTurn && !me.actionCardPlayedThisTurn;
-            cardEl.classList.toggle('disabled', !canPlay);
+            const canPlay = isMyTurn && !me.actionCardPlayedThisTurn && card.type !== 'aether-shard';
+            cardEl.classList.toggle('disabled', !canPlay || gameIsOver);
             cardEl.innerHTML = `<div class="card-name">${card.name}</div><div class="card-type">${card.type.charAt(0).toUpperCase() + card.type.slice(1)}</div><div class="card-effect">${card.effect || ''}</div>`;
-            if (canPlay) {
-                cardEl.addEventListener('click', () => playActionCard(card, index));
+            if (canPlay && !gameIsOver) {
+                cardEl.addEventListener('click', () => playActionCard(index));
             }
             playerHandEl.appendChild(cardEl);
         });
 
-        // Update message area
+        // Message
         showMessage(message);
 
-        // Update controls
+        // Controls
         endTurnBtn.disabled = !isMyTurn || !me.hasDrawn || gameIsOver;
-        if (gameIsOver) {
-            gameControls.classList.remove('active');
-            gameOverButtons.classList.add('active');
-        } else {
-            gameControls.classList.add('active');
-            gameOverButtons.classList.remove('active');
-        }
+        gameControls.classList.toggle('active', !gameIsOver);
+        gameOverButtons.classList.toggle('active', gameIsOver);
     }
 
     function getStatusText(status) {
         return Object.entries(status).map(([key, value]) => {
+            if (!value) return null;
             const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
             return value === true ? formattedKey : `${formattedKey}: ${value}`;
-        }).join(', ');
+        }).filter(Boolean).join(', ');
     }
 
     function showMessage(msg) {
         messageArea.textContent = msg;
     }
 
-    // --- INITIALIZE ---
     showScreen('menu');
 });
 </script>
