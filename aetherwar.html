@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Rift: Aether Wars</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        :root {
+            --primary-glow: #00ffff;
+            --secondary-glow: #ff00ff;
+            --background-color: #0c001f;
+            --text-color: #f0f8ff;
+            --card-bg: #1a0537;
+            --border-color: #4a00e0;
+            --danger-color: #ff4141;
+            --success-color: #3dff3d;
+            --menu-width: 320px;
+        }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            background-image: radial-gradient(circle, #1a0537, #0c001f 80%);
+        }
+        
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .screen.active {
+            display: flex;
+        }
+
+        /* --- New Multiplayer Styles --- */
+        .multiplayer-container {
+            text-align: center;
+            padding: 40px;
+            border: 2px solid var(--secondary-glow);
+            box-shadow: 0 0 25px var(--secondary-glow);
+            border-radius: 15px;
+            background: rgba(0,0,0,0.6);
+            width: 400px;
+        }
+        #host-id-display {
+            background: var(--background-color);
+            border: 1px dashed var(--primary-glow);
+            padding: 10px;
+            margin: 20px 0;
+            font-size: 1.2em;
+            color: var(--primary-glow);
+            cursor: pointer;
+            word-break: break-all;
+        }
+        #peer-id-input {
+            width: 100%;
+            padding: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1em;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 5px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        #multiplayer-status, #host-status {
+            height: 20px;
+            margin-top: 15px;
+            color: var(--success-color);
+        }
+
+        /* Menu & Game Mode Styles */
+        .menu-container, .gamemode-container {
+            text-align: center;
+            padding: 40px;
+            border: 2px solid var(--primary-glow);
+            box-shadow: 0 0 25px var(--primary-glow);
+            border-radius: 15px;
+            background: rgba(0,0,0,0.6);
+        }
+        
+        .menu-title, .gamemode-title {
+            font-size: 3.5em;
+            color: var(--primary-glow);
+            text-shadow: 0 0 10px var(--primary-glow), 0 0 20px var(--secondary-glow);
+            margin-bottom: 40px;
+        }
+
+        .menu-button, .gamemode-button {
+            display: block;
+            width: 280px;
+            padding: 15px 20px;
+            margin: 15px auto;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2em;
+            background-color: transparent;
+            color: var(--primary-glow);
+            border: 2px solid var(--primary-glow);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .menu-button:hover, .gamemode-button:hover {
+            background-color: var(--primary-glow);
+            color: var(--background-color);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+        /* --- Back Button Style Fix --- */
+        .back-button {
+            border-color: var(--danger-color) !important;
+            color: var(--danger-color) !important;
+        }
+        .back-button:hover {
+            background-color: var(--danger-color) !important;
+            color: var(--background-color) !important;
+            box-shadow: 0 0 15px var(--danger-color) !important;
+        }
+        .gamemode-description {
+            font-size: 0.9em;
+            color: var(--text-color);
+            opacity: 0.8;
+            max-width: 300px;
+            margin: -10px auto 20px auto;
+        }
+
+        /* Full Screen Glossary */
+        #full-glossary-screen {
+            flex-direction: column;
+            justify-content: flex-start;
+            overflow-y: auto;
+        }
+        #full-glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+            padding: 20px;
+        }
+        .glossary-card {
+            width: 130px; height: 190px; background-color: var(--card-bg); border: 2px solid var(--border-color);
+            border-radius: 10px; display: flex; flex-direction: column;
+            align-items: center; padding: 10px; box-sizing: border-box;
+        }
+        .glossary-card .card-effect {
+            font-size: 0.75em;
+        }
+        #close-full-glossary-btn {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Main Game Styles */
+        #game-screen {
+            padding: 10px;
+        }
+
+        .game-container {
+            width: 100%; height: 100%; max-width: 1400px; display: flex; flex-direction: column;
+            justify-content: space-between; align-items: center; padding: 15px; box-sizing: border-box;
+            border: 2px solid var(--primary-glow); box-shadow: 0 0 25px var(--primary-glow);
+            border-radius: 15px; background: rgba(0,0,0,0.4); transition: transform 0.5s ease-in-out;
+        }
+        
+        .game-container.menu-open {
+            transform: translateX(calc(var(--menu-width) / -2));
+        }
+
+        .player-area { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+        .player-info, .ai-info { flex-basis: 25%; text-align: center; }
+        .player-info h2, .ai-info h2 { margin: 0; text-shadow: 0 0 5px var(--text-color); }
+        .score { font-size: 4em; font-weight: 700; text-shadow: 0 0 15px var(--primary-glow); line-height: 1.1; }
+        .status-effects { font-size: 0.8em; color: var(--secondary-glow); height: 18px; margin-top: 5px; }
+        .dark-matter-active { filter: blur(5px); pointer-events: none; }
+        .center-area { text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #game-title { font-size: 2em; font-weight: 700; color: var(--primary-glow); text-shadow: 0 0 10px var(--primary-glow), 0 0 20px var(--secondary-glow); margin: 0 0 10px 0; }
+        #message-area { height: 30px; font-size: 1.2em; color: var(--secondary-glow); text-shadow: 0 0 5px var(--secondary-glow); transition: all 0.3s; }
+        .deck-area { display: flex; gap: 20px; margin-top: 20px; }
+
+        .card-pile {
+            width: 100px; height: 150px; border: 2px dashed var(--border-color); border-radius: 10px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; transition: all 0.3s; position: relative;
+        }
+        .card-pile.disabled { cursor: not-allowed; opacity: 0.6; }
+        .card-pile:not(.disabled):hover { border-color: var(--primary-glow); box-shadow: 0 0 15px var(--primary-glow); }
+        .card-pile::before { content: 'DECK'; position: absolute; top: 5px; font-size: 0.8em; }
+        #deck-count { font-size: 2em; }
+
+        .player-hand { width: 100%; height: 170px; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; }
+        
+        .card {
+            width: 100px; height: 150px; background-color: var(--card-bg); border: 2px solid var(--border-color);
+            border-radius: 10px; display: flex; flex-direction: column;
+            align-items: center; padding: 8px; box-sizing: border-box; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transition: all 0.3s ease; cursor: pointer; position: relative;
+        }
+        .card:hover { transform: translateY(-10px) scale(1.05); box-shadow: 0 0 15px var(--secondary-glow); border-color: var(--secondary-glow); }
+        .card.disabled { cursor: not-allowed; opacity: 0.6; }
+        .card.disabled:hover { transform: none; box-shadow: 0 0 10px rgba(0,0,0,0.5); border-color: var(--border-color); }
+        .card-name { font-size: 0.9em; font-weight: 700; text-align: center; flex-shrink: 0; }
+        .card-type { font-size: 0.7em; font-style: italic; color: var(--primary-glow); flex-shrink: 0; margin: 4px 0; }
+        .card-effect {
+            font-size: 0.75em;
+            text-align: center;
+            flex-grow: 1;
+            overflow-y: auto;
+            overflow-wrap: break-word;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-glow) transparent;
+        }
+        .card-effect::-webkit-scrollbar { width: 5px; }
+        .card-effect::-webkit-scrollbar-track { background: transparent; }
+        .card-effect::-webkit-scrollbar-thumb { background-color: var(--primary-glow); border-radius: 20px; border: 1px solid var(--background-color); }
+
+        .card.aether-shard { border-color: #00ffff; } .card.attack { border-color: #ff4141; }
+        .card.defense { border-color: #3dff3d; } .card.special { border-color: #ff00ff; }
+
+        .card.aether-shard .card-type, .glossary-card.aether-shard .card-type, .glossary-item.aether-shard .glossary-item-type { color: #00ffff; }
+        .card.attack .card-type, .glossary-card.attack .card-type, .glossary-item.attack .glossary-item-type { color: #ff4141; }
+        .card.defense .card-type, .glossary-card.defense .card-type, .glossary-item.defense .glossary-item-type { color: #3dff3d; }
+        .card.special .card-type, .glossary-card.special .card-type, .glossary-item.special .glossary-item-type { color: #ff00ff; }
+        
+        .glossary-card.aether-shard { border-color: #00ffff; }
+        .glossary-card.attack { border-color: #ff4141; }
+        .glossary-card.defense { border-color: #3dff3d; }
+        .glossary-card.special { border-color: #ff00ff; }
+
+        .game-controls, .game-over-buttons { display: none; margin-top: 15px; }
+        .game-controls.active, .game-over-buttons.active { display: block; }
+        .game-control-btn, .game-over-button {
+            padding: 10px 20px; font-family: 'Orbitron', sans-serif; font-size: 1em; background-color: transparent;
+            color: var(--primary-glow); border: 2px solid var(--primary-glow); border-radius: 5px; cursor: pointer;
+            transition: all 0.3s; margin: 0 10px;
+        }
+        .game-control-btn:hover, .game-over-button:hover { background-color: var(--primary-glow); color: var(--background-color); box-shadow: 0 0 15px var(--primary-glow); }
+        .game-control-btn:disabled { cursor: not-allowed; opacity: 0.5; background-color: transparent !important; color: var(--primary-glow) !important; box-shadow: none !important; }
+        #quit-game-btn { color: var(--danger-color); border-color: var(--danger-color); }
+        #quit-game-btn:hover { background-color: var(--danger-color); color: var(--background-color); box-shadow: 0 0 15px var(--danger-color); }
+        
+        #glossary-toggle {
+            position: fixed; top: 50%; right: 0; transform: translateY(-50%) rotate(-90deg); transform-origin: bottom right;
+            background-color: var(--border-color); color: var(--text-color); border: none; padding: 10px 15px;
+            cursor: pointer; z-index: 1001; border-top-left-radius: 8px; border-top-right-radius: 8px;
+            font-family: 'Orbitron', sans-serif; font-size: 1em; transition: all 0.5s ease-in-out;
+            display: none;
+        }
+        #glossary-toggle.visible { display: block; }
+        #glossary-toggle.open { right: var(--menu-width); }
+        #glossary-toggle:hover { background-color: var(--primary-glow); color: var(--background-color); }
+        
+        #side-glossary {
+            position: fixed; top: 0; right: calc(var(--menu-width) * -1); width: var(--menu-width); height: 100vh;
+            background-color: #120029; border-left: 2px solid var(--primary-glow); box-shadow: -10px 0 25px rgba(0, 255, 255, 0.5);
+            z-index: 1000; transition: right 0.5s ease-in-out; padding: 20px; box-sizing: border-box; overflow-y: auto;
+            -ms-overflow-style: none; scrollbar-width: none;
+        }
+        #side-glossary::-webkit-scrollbar { display: none; }
+        #side-glossary.open { right: 0; }
+        #side-glossary h2 { text-align: center; color: var(--primary-glow); text-shadow: 0 0 10px var(--primary-glow); }
+        .glossary-item { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dashed var(--border-color); }
+        .glossary-item-name { font-size: 1.1em; font-weight: bold; color: var(--text-color); }
+        .glossary-item-type { font-size: 0.8em; font-style: italic; color: var(--secondary-glow); margin-bottom: 5px; }
+        .glossary-item-effect { font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+    <div id="menu-screen" class="screen active">
+        <div class="menu-container">
+            <h1 class="menu-title">Cosmic Rift</h1>
+            <button id="single-player-btn" class="menu-button">Single Player</button>
+            <button id="multiplayer-btn" class="menu-button">Multiplayer</button>
+            <button id="full-glossary-btn" class="menu-button">View All Cards</button>
+        </div>
+    </div>
+
+    <div id="multiplayer-screen" class="screen">
+        <div class="multiplayer-container">
+            <h2 class="gamemode-title">Multiplayer</h2>
+            <button id="host-game-btn" class="menu-button">Host Game</button>
+            <button id="join-game-screen-btn" class="menu-button">Join Game</button>
+            <button id="back-to-menu-btn" class="menu-button back-button">Back</button>
+        </div>
+    </div>
+
+    <div id="join-screen" class="screen">
+        <div class="multiplayer-container">
+            <h2 class="gamemode-title">Join Game</h2>
+            <p>Enter the Game ID from your friend:</p>
+            <input type="text" id="peer-id-input" placeholder="Game ID...">
+            <button id="connect-btn" class="menu-button">Connect</button>
+            <div id="multiplayer-status"></div>
+            <button id="back-to-multiplayer-menu-btn" class="menu-button back-button">Back</button>
+        </div>
+    </div>
+    
+    <div id="host-screen" class="screen">
+        <div class="multiplayer-container">
+            <h2 class="gamemode-title">Host Game</h2>
+            <p>Share this Game ID with your friend:</p>
+            <div id="host-id-display" title="Click to copy">Generating ID...</div>
+            <p>Waiting for player to connect...</p>
+            <div id="host-status"></div>
+            <button id="cancel-host-btn" class="menu-button back-button">Cancel</button>
+        </div>
+    </div>
+
+
+    <div id="gamemode-screen" class="screen">
+        <div class="gamemode-container">
+            <h2 class="gamemode-title">Select Mode</h2>
+            <div id="gamemode-buttons-container">
+                <button class="gamemode-button" data-mode="classic">Classic</button>
+                <p class="gamemode-description">Hand Size: 3. A balanced set of core cards.</p>
+                <button class="gamemode-button" data-mode="duelist">Duelist's Edge</button>
+                <p class="gamemode-description">Hand Size: 2. A tactical mode with no chaotic cards.</p>
+                <button class="gamemode-button" data-mode="gambit">Cosmic Gambit</button>
+                <p class="gamemode-description">Hand Size: 4. A mode focused on hand management.</p>
+                <button class="gamemode-button" data-mode="chaos">Cosmic Chaos</button>
+                <p class="gamemode-description">Hand Size: Unlimited. All cards are in the deck.</p>
+            </div>
+            <button id="gamemode-back-btn" class="menu-button back-button" style="margin-top: 30px;">Back</button>
+        </div>
+    </div>
+
+    <div id="full-glossary-screen" class="screen">
+        <h1 class="menu-title">Complete Card Glossary</h1>
+        <div id="full-glossary-grid"></div>
+        <button id="close-full-glossary-btn" class="menu-button back-button">Back to Menu</button>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div class="game-container" id="game-container">
+            <div class="player-area">
+                <div class="player-info">
+                    <h2>Player</h2>
+                    <div id="player-score" class="score">0</div>
+                    <div id="player-status" class="status-effects"></div>
+                </div>
+                <div class="center-area">
+                    <h1 id="game-title">Aether Wars</h1>
+                    <div id="message-area"></div>
+                    <div class="deck-area">
+                        <div id="deck" class="card-pile">
+                            <span id="deck-count"></span>
+                        </div>
+                    </div>
+                    <div id="game-controls" class="game-controls">
+                        <button id="end-turn-btn" class="game-control-btn">End Turn</button>
+                        <button id="quit-game-btn" class="game-control-btn">Quit</button>
+                    </div>
+                    <div id="game-over-buttons" class="game-over-buttons">
+                        <button id="play-again-btn" class="game-over-button">Play Again</button>
+                        <button id="main-menu-btn" class="game-over-button">Main Menu</button>
+                    </div>
+                </div>
+                <div class="ai-info">
+                    <h2 id="opponent-name-display">Cosmic AI</h2>
+                    <div id="ai-score" class="score">0</div>
+                    <div id="ai-status" class="status-effects"></div>
+                </div>
+            </div>
+            <div class="player-hand" id="player-hand"></div>
+        </div>
+    </div>
+    
+    <div id="side-glossary">
+        <h2>Card Glossary</h2>
+        <div id="side-glossary-content"></div>
+    </div>
+    <button id="glossary-toggle">Cards</button>
+
+
+<script type="module">
+    // Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- Firebase Initialization ---
+    let db, auth;
+    try {
+        // FIX: Use the environment-provided Firebase config
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config)
+            : { apiKey: "DEMO_KEY", authDomain: "DEMO", projectId: "DEMO" }; // Fallback for local testing
+
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        // Sign in users anonymously
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("User is signed in anonymously:", user.uid);
+            } else {
+                signInAnonymously(auth).catch((error) => {
+                    console.error("Anonymous sign-in failed:", error);
+                    alert("Could not connect to multiplayer services. Please refresh the page.");
+                });
+            }
+        });
+    } catch (e) {
+        console.error("Firebase initialization failed:", e);
+        // Hide multiplayer button if Firebase fails to initialize
+        const multiplayerBtn = document.getElementById('multiplayer-btn');
+        if(multiplayerBtn) multiplayerBtn.style.display = 'none';
+    }
+
+
+// This script now handles the game logic
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- DOM ELEMENTS ---
+    const screens = { 
+        menu: document.getElementById('menu-screen'), 
+        gamemode: document.getElementById('gamemode-screen'), 
+        game: document.getElementById('game-screen'), 
+        fullGlossary: document.getElementById('full-glossary-screen'),
+        multiplayer: document.getElementById('multiplayer-screen'),
+        host: document.getElementById('host-screen'),
+        join: document.getElementById('join-screen'),
+    };
+    const singlePlayerBtn = document.getElementById('single-player-btn');
+    const multiplayerBtn = document.getElementById('multiplayer-btn');
+    const fullGlossaryBtn = document.getElementById('full-glossary-btn');
+    const closeFullGlossaryBtn = document.getElementById('close-full-glossary-btn');
+    const hostGameBtn = document.getElementById('host-game-btn');
+    const joinGameScreenBtn = document.getElementById('join-game-screen-btn');
+    const backToMenuBtn = document.getElementById('back-to-menu-btn');
+    const hostIdDisplay = document.getElementById('host-id-display');
+    const hostStatus = document.getElementById('host-status');
+    const cancelHostBtn = document.getElementById('cancel-host-btn');
+    const peerIdInput = document.getElementById('peer-id-input');
+    const connectBtn = document.getElementById('connect-btn');
+    const multiplayerStatus = document.getElementById('multiplayer-status');
+    const backToMultiplayerMenuBtn = document.getElementById('back-to-multiplayer-menu-btn');
+    const gamemodeButtonsContainer = document.getElementById('gamemode-buttons-container');
+    const gamemodeBackBtn = document.getElementById('gamemode-back-btn');
+    const gameContainer = document.getElementById('game-container');
+    const playerScoreEl = document.getElementById('player-score'), aiScoreEl = document.getElementById('ai-score');
+    const playerStatusEl = document.getElementById('player-status'), aiStatusEl = document.getElementById('ai-status');
+    const opponentNameDisplay = document.getElementById('opponent-name-display');
+    const messageArea = document.getElementById('message-area');
+    const deckEl = document.getElementById('deck'), deckCountEl = document.getElementById('deck-count');
+    const playerHandEl = document.getElementById('player-hand');
+    const gameControls = document.getElementById('game-controls');
+    const endTurnBtn = document.getElementById('end-turn-btn'), quitGameBtn = document.getElementById('quit-game-btn');
+    const gameOverButtons = document.getElementById('game-over-buttons');
+    const playAgainBtn = document.getElementById('play-again-btn'), mainMenuBtn = document.getElementById('main-menu-btn');
+    const sideGlossaryEl = document.getElementById('side-glossary'), glossaryToggleBtn = document.getElementById('glossary-toggle');
+    const sideGlossaryContentEl = document.getElementById('side-glossary-content');
+    const fullGlossaryGridEl = document.getElementById('full-glossary-grid');
+
+    // --- GAME STATE ---
+    let deck = [], playerHand = [], aiHand = [];
+    let playerScore = 0, aiScore = 0;
+    let playerStatus = {}, aiStatus = {};
+    let isPlayerTurn = true, playerHasDrawn = false, actionCardPlayedThisTurn = false;
+    let gameIsOver = false;
+    let currentGamemode = 'classic', handSizeLimit = 3;
+    
+    // --- MULTIPLAYER STATE ---
+    let isMultiplayer = false;
+    let isHost = false;
+    let currentGameId = null;
+    let unsubscribeFromGame = null;
+
+    // --- MASTER CARD DEFINITIONS ---
+    const allCards = {
+        aetherShards: [
+            ...Array(4).fill({ name: 'Aether Shard', type: 'aether-shard', value: 2 }), ...Array(4).fill({ name: 'Aether Shard', type: 'aether-shard', value: 3 }),
+            ...Array(3).fill({ name: 'Aether Shard', type: 'aether-shard', value: 4 }), ...Array(3).fill({ name: 'Aether Shard', type: 'aether-shard', value: 5 }),
+            ...Array(2).fill({ name: 'Aether Shard', type: 'aether-shard', value: 6 }), ...Array(2).fill({ name: 'Aether Shard', type: 'aether-shard', value: 7 }),
+            ...Array(1).fill({ name: 'Aether Shard', type: 'aether-shard', value: 8 }), ...Array(1).fill({ name: 'Aether Shard', type: 'aether-shard', value: 9 }),
+        ],
+        classic: [
+            { name: 'Blast', type: 'attack', effect: 'Reduce opponent score by 5.', action: 'attack', value: 5 },
+            { name: 'Shield', type: 'defense', effect: 'Block the next attack.', action: 'shield' },
+            { name: 'Double Draw', type: 'special', effect: 'Draw 2 cards next turn.', action: 'doubledraw' },
+        ],
+        strategic: [
+            { name: 'Aether Overload', type: 'attack', effect: 'Opponent immediately draws 2 cards.', action: 'overload' },
+            { name: 'Shatter', type: 'attack', effect: 'Destroy opponent\'s Shield. If they have none, they lose 7 score.', action: 'shatter' },
+            { name: 'Aether Leach', type: 'special', effect: 'Steal 4 score from opponent.', action: 'leach', value: 4 },
+            { name: 'Stabilize', type: 'defense', effect: 'Next time you > 21, score becomes 15, not 0.', action: 'stabilize' },
+            { name: 'Sanctuary', type: 'defense', effect: 'Your score cannot be reduced for 2 turns.', action: 'sanctuary' },
+            { name: 'Rift Surge', type: 'special', effect: 'Set your score to 11.', action: 'surge' },
+        ],
+        advanced: [
+            { name: 'Aether Siphon', type: 'attack', effect: 'Steal a random card from opponent\'s hand. If they have none, they lose 5 score.', action: 'siphon' },
+            { name: 'Rift Leak', type: 'attack', effect: 'Opponent loses 2 score at the start of their next 3 turns.', action: 'riftleak' },
+            { name: 'Phase Shift', type: 'defense', effect: 'On your next turn, you may skip your draw phase to gain 3 score.', action: 'phaseshift' },
+            { name: 'Dark Matter', type: 'defense', effect: 'Your score is hidden from your opponent for your next 2 turns.', action: 'darkmatter' },
+            { name: 'Supernova', type: 'attack', effect: 'Both players\' scores are halved (rounded down).', action: 'supernova' },
+            { name: 'Paradox', type: 'special', effect: 'If winning, swap score with lower player. If losing, swap with higher.', action: 'paradox' },
+            { name: 'Event Horizon', type: 'special', effect: 'For 3 turns, all score-reducing effects are reversed for both players.', action: 'eventhorizon' },
+            { name: 'Time Warp', type: 'special', effect: 'Take an extra turn after this one.', action: 'timewarp' },
+            { name: 'Counterspell', type: 'defense', effect: 'On opponent\'s next turn, if they attack, its effect is reflected back for 3 damage.', action: 'counterspell' },
+            { name: 'Gambit', type: 'special', effect: 'Discard your hand. Gain 5 score per card.', action: 'gambit' },
+            { name: 'Equilibrium', type: 'special', effect: 'Both scores become the average of the two.', action: 'equilibrium' },
+            { name: 'Singularity', type: 'special', effect: 'Reset both players\' scores to 0.', action: 'singularity' },
+            { name: 'Void Swap', type: 'special', effect: 'Swap scores with your opponent.', action: 'swap' },
+        ]
+    };
+    const cardPools = {
+        classic: [...allCards.classic],
+        duelist: [...allCards.classic, ...allCards.strategic],
+        gambit: [...allCards.classic, ...allCards.strategic, ...allCards.advanced.filter(c => ['Gambit', 'Aether Siphon'].includes(c.name))],
+        chaos: [].concat(...Object.values(allCards).slice(1))
+    };
+
+    // --- SCREEN MANAGEMENT ---
+    function showScreen(screenName) {
+        Object.values(screens).forEach(s => s.classList.remove('active'));
+        screens[screenName].classList.add('active');
+        glossaryToggleBtn.classList.toggle('visible', screenName === 'game');
+    }
+
+    // --- GAME SETUP ---
+    function populateSideGlossary(mode) {
+        const contentEl = sideGlossaryContentEl;
+        contentEl.innerHTML = '';
+        const actionCards = cardPools[mode];
+        const uniqueActionCards = [...new Map(actionCards.map(c => [c.name, c])).values()];
+        const shardValues = allCards.aetherShards.map(c => c.value);
+        const aetherShardEntry = { name: 'Aether Shard', type: 'aether-shard', effect: `Adds a value between ${Math.min(...shardValues)} and ${Math.max(...shardValues)} to your score.` };
+        const glossaryList = [...uniqueActionCards, aetherShardEntry];
+        const typeOrder = { 'attack': 1, 'defense': 2, 'special': 3, 'aether-shard': 4 };
+        glossaryList.sort((a,b) => (typeOrder[a.type] - typeOrder[b.type]) || a.name.localeCompare(b.name));
+        glossaryList.forEach(card => {
+            const itemEl = document.createElement('div');
+            itemEl.classList.add('glossary-item', card.type);
+            itemEl.innerHTML = `<div class="glossary-item-name">${card.name}</div><div class="glossary-item-type">${card.type.charAt(0).toUpperCase() + card.type.slice(1)}</div><div class="glossary-item-effect">${card.effect}</div>`;
+            contentEl.appendChild(itemEl);
+        });
+    }
+
+    function populateFullGlossary() {
+        const gridEl = fullGlossaryGridEl;
+        gridEl.innerHTML = '';
+        const allActionCards = [].concat(...Object.values(cardPools));
+        const uniqueActionCards = [...new Map(allActionCards.map(c => [c.name, c])).values()];
+        const shardValues = allCards.aetherShards.map(c => c.value);
+        const aetherShardEntry = { name: 'Aether Shard', type: 'aether-shard', effect: `Value: ${Math.min(...shardValues)}-${Math.max(...shardValues)}` };
+        const glossaryList = [...uniqueActionCards, aetherShardEntry];
+        const typeOrder = { 'attack': 1, 'defense': 2, 'special': 3, 'aether-shard': 4 };
+        glossaryList.sort((a,b) => (typeOrder[a.type] - typeOrder[b.type]) || a.name.localeCompare(b.name));
+        glossaryList.forEach(card => {
+            const cardEl = document.createElement('div');
+            cardEl.classList.add('glossary-card', card.type);
+            cardEl.innerHTML = `<div class="card-name">${card.name}</div><div class="card-type">${card.type.charAt(0).toUpperCase() + card.type.slice(1)}</div><div class="card-effect">${card.effect}</div>`;
+            gridEl.appendChild(cardEl);
+        });
+    }
+
+    function createDeck(mode) {
+        deck = [...allCards.aetherShards];
+        const actionCards = cardPools[mode];
+        actionCards.forEach(card => {
+            const copies = (card.name === 'Shield' || card.name === 'Blast') ? 3 : 2;
+            for(let i = 0; i < copies; i++) deck.push(card);
+        });
+        for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+    }
+
+    function startGame(mode, isMultiplayerGame = false) {
+        isMultiplayer = isMultiplayerGame;
+        sideGlossaryEl.classList.remove('open');
+        glossaryToggleBtn.classList.remove('open');
+        gameContainer.classList.remove('menu-open');
+        
+        currentGamemode = mode;
+        switch(mode) {
+            case 'duelist': handSizeLimit = 2; break;
+            case 'gambit': handSizeLimit = 4; break;
+            case 'chaos': handSizeLimit = 99; break;
+            default: handSizeLimit = 3;
+        }
+        
+        if (isMultiplayer) {
+            opponentNameDisplay.textContent = "Opponent";
+            playAgainBtn.style.display = 'none';
+        } else {
+            opponentNameDisplay.textContent = "Cosmic AI";
+            playAgainBtn.style.display = 'inline-block';
+            createDeck(mode);
+            resetGameState();
+            showMessage("Your turn. Draw a card.");
+        }
+        
+        populateSideGlossary(mode);
+        gameControls.classList.add('active');
+        gameOverButtons.classList.remove('active');
+        showScreen('game');
+    }
+    
+    function resetGameState() {
+        playerScore = 0; aiScore = 0;
+        playerHand = []; aiHand = [];
+        playerStatus = {}; aiStatus = {};
+        isPlayerTurn = true;
+        playerHasDrawn = false; actionCardPlayedThisTurn = false;
+        gameIsOver = false;
+        updateAllUI();
+    }
+
+    // --- UI UPDATES ---
+    function updateAllUI() { updateScores(); updateHandUI(); updateStatusEffectsUI(); }
+    function updateScores() {
+        playerScoreEl.textContent = playerStatus.darkmatter > 0 ? '??' : playerScore;
+        aiScoreEl.textContent = aiStatus.darkmatter > 0 ? '??' : aiScore;
+        playerScoreEl.classList.toggle('dark-matter-active', aiStatus.darkmatter > 0);
+        aiScoreEl.classList.toggle('dark-matter-active', playerStatus.darkmatter > 0);
+    }
+    function updateHandUI() {
+        playerHandEl.innerHTML = '';
+        playerHand.forEach((card, index) => {
+            const cardEl = document.createElement('div');
+            cardEl.classList.add('card', card.type);
+            const canPlay = isPlayerTurn && (!actionCardPlayedThisTurn || card.type === 'aether-shard');
+            if (!canPlay) cardEl.classList.add('disabled');
+            
+            cardEl.innerHTML = `<div class="card-name">${card.name}</div><div class="card-type">${card.type.charAt(0).toUpperCase() + card.type.slice(1)}</div><div class="card-effect">${card.effect || ''}</div>`;
+            if (canPlay) {
+                cardEl.addEventListener('click', () => isMultiplayer ? playActionCardMP(card, index) : playActionCard(card, index));
+            }
+            playerHandEl.appendChild(cardEl);
+        });
+        deckCountEl.textContent = deck.length;
+    }
+    function updateStatusEffectsUI() {
+        const getStatusText = (status) => Object.entries(status).map(([key, value]) => {
+            const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
+            return value === true ? formattedKey : `${formattedKey}: ${value}`;
+        }).join(', ');
+        playerStatusEl.textContent = getStatusText(playerStatus);
+        aiStatusEl.textContent = getStatusText(aiStatus);
+    }
+    function showMessage(msg, type = "game") {
+        if (gameIsOver && !['player', 'ai'].includes(type)) return;
+        messageArea.textContent = msg;
+        messageArea.style.color = type === 'player' ? 'var(--primary-glow)' : type === 'ai' ? '#ff4141' : 'var(--secondary-glow)';
+    }
+
+    // --- GAME LOGIC (Single Player) ---
+    function processTurnStartEffects(isPlayer) {
+        const userStatus = isPlayer ? playerStatus : aiStatus;
+        if (userStatus.riftleak > 0) {
+            reduceScore(isPlayer, 2);
+            showMessage(`${isPlayer ? 'You' : 'Opponent'} took 2 damage from Rift Leak.`);
+        }
+        Object.keys(userStatus).forEach(key => {
+            if (['riftleak', 'sanctuary', 'darkmatter', 'eventhorizon'].includes(key)) {
+                if (typeof userStatus[key] === 'number') {
+                    userStatus[key]--;
+                    if (userStatus[key] <= 0) delete userStatus[key];
+                }
+            }
+        });
+        if (isPlayer && userStatus.phaseshift) {
+            delete userStatus.phaseshift;
+            playerHasDrawn = true; deckEl.classList.add('disabled');
+            playerScore += 3;
+            showMessage("You Phase Shifted, gaining 3 score.");
+            if(!gameIsOver) endTurnBtn.disabled = false;
+        }
+        updateAllUI();
+        checkWinCondition();
+    }
+
+    function checkWinCondition() {
+        if (gameIsOver) return;
+        if (playerScore === 21) { showMessage("YOU CLOSED THE RIFT! YOU WIN!", "player"); endGame(); }
+        else if (aiScore === 21) { showMessage("THE OPPONENT WINS. THE COSMOS IS LOST.", "ai"); endGame(); }
+    }
+    
+    function endGame() {
+        if (gameIsOver) return;
+        gameIsOver = true;
+        deckEl.style.display = 'none';
+        gameControls.classList.remove('active');
+        gameOverButtons.classList.add('active');
+    }
+
+    function handleScoreOverflow(isPlayer) {
+        let score = isPlayer ? playerScore : aiScore;
+        let status = isPlayer ? playerStatus : aiStatus;
+        if (score > 21) {
+            if (status.stabilized) { score = 15; delete status.stabilized; showMessage(`${isPlayer ? 'Your' : 'Opponent\'s'} Stabilizer absorbed the shock!`, isPlayer ? 'player' : 'ai');
+            } else { score = 0; showMessage(`${isPlayer ? 'Your' : 'Opponent\'s'} rift destabilized! Score reset.`, isPlayer ? 'player' : 'ai'); }
+            if (isPlayer) playerScore = score; else aiScore = score;
+        }
+        updateScores(); checkWinCondition();
+    }
+
+    function handleCardDraw(isPlayer, isLastDraw) {
+        if (gameIsOver) return;
+        const card = drawCard();
+        if (!card) return;
+        showMessage(`${isPlayer ? "You" : "Opponent"} drew ${card.name}.`);
+        if (card.type === 'aether-shard') {
+            if (isPlayer) playerScore += card.value; else aiScore += card.value;
+        } else {
+            const hand = isPlayer ? playerHand : aiHand;
+            if (hand.length < handSizeLimit) hand.push(card);
+            else showMessage(`${isPlayer ? "Your" : "Opponent's"} hand is full! Card discarded.`);
+        }
+        handleScoreOverflow(isPlayer);
+        if (isPlayer) updateHandUI();
+        if (isPlayer && isLastDraw && !gameIsOver) endTurnBtn.disabled = false;
+    }
+    
+    function drawCard() {
+        if (deck.length === 0) { 
+            createDeck(currentGamemode); 
+            showMessage("Deck reshuffled!", "system"); 
+        }
+        return deck.pop();
+    }
+
+    function reduceScore(isPlayer, amount) {
+        const horizonActive = playerStatus.eventhorizon > 0 || aiStatus.eventhorizon > 0;
+        if (isPlayer) { playerScore = Math.max(0, playerScore + (horizonActive ? amount : -amount)); }
+        else { aiScore = Math.max(0, aiScore + (horizonActive ? amount : -amount)); }
+    }
+
+    function executeAction(card, isPlayer) {
+        if (gameIsOver) return;
+        const user = isPlayer ? 'You' : 'Opponent';
+        const opponentStatus = isPlayer ? aiStatus : playerStatus;
+        const userStatus = isPlayer ? playerStatus : aiStatus;
+        showMessage(`${user} played ${card.name}!`);
+
+        if (card.type === 'attack' && opponentStatus.counterspell) {
+             showMessage(`Counterspell reflects the attack!`);
+             reduceScore(isPlayer, 3);
+             delete opponentStatus.counterspell; updateAllUI(); return;
+        }
+
+        switch(card.action) {
+            case 'attack':
+                if (opponentStatus.sanctuary > 0) { showMessage(`Attack has no effect on Sanctuary!`); break; }
+                if (opponentStatus.shield) { delete opponentStatus.shield; showMessage(`${user}'s attack was blocked!`); } 
+                else { reduceScore(!isPlayer, card.value); }
+                break;
+            case 'shatter':
+                if (opponentStatus.shield) { delete opponentStatus.shield; showMessage(`Shield shattered!`); }
+                else { reduceScore(!isPlayer, 7); }
+                break;
+            case 'siphon':
+                const opponentHand = isPlayer ? aiHand : playerHand;
+                if (opponentHand.length > 0) {
+                    const stolenCardIndex = Math.floor(Math.random() * opponentHand.length);
+                    const stolenCard = opponentHand.splice(stolenCardIndex, 1)[0];
+                    if ((isPlayer ? playerHand : aiHand).length < handSizeLimit) {
+                         (isPlayer ? playerHand : aiHand).push(stolenCard); showMessage(`Stole ${stolenCard.name}!`);
+                    } else { showMessage(`Stole a card, but hand was full! Discarded.`); }
+                } else { reduceScore(!isPlayer, 5); }
+                break;
+            case 'supernova': playerScore = Math.floor(playerScore/2); aiScore = Math.floor(aiScore/2); break;
+            case 'riftleak': opponentStatus.riftleak = (opponentStatus.riftleak || 0) + 3; break;
+            case 'shield': userStatus.shield = true; break;
+            case 'stabilize': userStatus.stabilized = true; break;
+            case 'sanctuary': userStatus.sanctuary = 2; break;
+            case 'counterspell': userStatus.counterspell = true; break;
+            case 'phaseshift': userStatus.phaseshift = true; showMessage("Phase Shift is active for next turn."); break;
+            case 'darkmatter': opponentStatus.darkmatter = 2; break;
+            case 'leach':
+                const stolen = isPlayer ? Math.min(aiScore, card.value) : Math.min(playerScore, card.value);
+                reduceScore(!isPlayer, stolen); if(isPlayer) playerScore += stolen; else aiScore += stolen;
+                break;
+            case 'doubledraw': userStatus.doubledraw = true; break;
+            case 'overload': forceDraw(!isPlayer, 2); break;
+            case 'swap': [playerScore, aiScore] = [aiScore, playerScore]; break;
+            case 'surge': if (isPlayer) playerScore = 11; else aiScore = 11; break;
+            case 'gambit':
+                const hand = isPlayer ? playerHand : aiHand; const scoreGain = hand.length * 5;
+                if (isPlayer) { playerScore += scoreGain; playerHand = []; } else { aiScore += scoreGain; aiHand = []; }
+                break;
+            case 'equilibrium': const avg = Math.round((playerScore + aiScore) / 2); playerScore = avg; aiScore = avg; break;
+            case 'singularity': playerScore = 0; aiScore = 0; break;
+            case 'timewarp': userStatus.extraTurn = true; break;
+            case 'paradox':
+                 if (isPlayer) { if (playerScore > aiScore) [playerScore, aiScore] = [aiScore, playerScore]; }
+                 else { if (aiScore > playerScore) [playerScore, aiScore] = [aiScore, playerScore]; }
+                break;
+            case 'eventhorizon': playerStatus.eventhorizon = 3; aiStatus.eventhorizon = 3; break;
+        }
+        handleScoreOverflow(true); handleScoreOverflow(false);
+        updateAllUI();
+    }
+
+    function forceDraw(isPlayer, numCards) {
+        if (gameIsOver) return;
+        for(let i=0; i < numCards; i++) {
+            setTimeout(() => {
+                if(gameIsOver) return;
+                handleCardDraw(isPlayer, i === numCards - 1)
+            }, (i + 1) * 500);
+        }
+    }
+
+    function playerDraws() {
+        if (isMultiplayer) { playerDrawsMP(); return; }
+        if (gameIsOver || !isPlayerTurn || playerHasDrawn) return;
+        playerHasDrawn = true;
+        deckEl.classList.add('disabled');
+        const draws = playerStatus.doubledraw ? 2 : 1;
+        if(playerStatus.doubledraw) delete playerStatus.doubledraw;
+        forceDraw(true, draws);
+    }
+
+    function playActionCard(card, index){
+        if(gameIsOver || !isPlayerTurn || actionCardPlayedThisTurn) return;
+        actionCardPlayedThisTurn = true;
+        playerHand.splice(index, 1);
+        updateHandUI();
+        executeAction(card, true);
+        if (!gameIsOver) endTurnBtn.disabled = false;
+    }
+
+    function endPlayerTurn() {
+        if (isMultiplayer) { endPlayerTurnMP(); return; }
+        if (gameIsOver || !isPlayerTurn) return;
+        if (playerStatus.extraTurn) {
+            delete playerStatus.extraTurn;
+            showMessage("Time Warp! You get another turn.");
+            isPlayerTurn = true; actionCardPlayedThisTurn = false; playerHasDrawn = false;
+            deckEl.classList.remove('disabled'); endTurnBtn.disabled = true;
+            updateHandUI();
+            processTurnStartEffects(true);
+            return;
+        }
+        isPlayerTurn = false;
+        endTurnBtn.disabled = true;
+        showMessage("Opponent's turn.");
+        updateHandUI();
+        setTimeout(aiTurn, 1000);
+    }
+
+    function aiTurn() {
+        if (gameIsOver) return;
+        processTurnStartEffects(false);
+        if (gameIsOver) return;
+        
+        let cardToPlay = aiHand.find(c => c.action === 'shield' && aiScore > 15) || aiHand.find(c => c.type === 'attack' && playerScore > 15) || aiHand.find(c => c.action === 'surge' && aiScore < 10) || aiHand.find(c => c.action === 'doubledraw' && aiHand.length < 2);
+        if (cardToPlay) { 
+            executeAction(cardToPlay, false); 
+            aiHand.splice(aiHand.indexOf(cardToPlay), 1); 
+        }
+        
+        setTimeout(() => {
+            if (gameIsOver) return;
+            const draws = aiStatus.doubledraw ? 2 : 1;
+            if(aiStatus.doubledraw) delete aiStatus.doubledraw;
+            forceDraw(false, draws);
+            setTimeout(() => {
+                if (gameIsOver) return;
+                isPlayerTurn = true;
+                actionCardPlayedThisTurn = false; playerHasDrawn = false;
+                deckEl.classList.remove('disabled');
+                showMessage("Your turn. Draw a card or play an action.");
+                updateHandUI();
+                processTurnStartEffects(true);
+            }, 1000 * draws);
+        }, 1000);
+    }
+
+    async function returnToMenu() {
+        if (isMultiplayer && isHost && currentGameId) {
+            await deleteDoc(doc(db, 'games', currentGameId));
+        }
+        if (unsubscribeFromGame) {
+            unsubscribeFromGame();
+            unsubscribeFromGame = null;
+        }
+        isMultiplayer = false;
+        isHost = false;
+        currentGameId = null;
+        sideGlossaryEl.classList.remove('open');
+        glossaryToggleBtn.classList.remove('open');
+        showScreen('menu');
+    }
+
+    // --- FIREBASE MULTIPLAYER FUNCTIONS ---
+    async function hostGame(mode) {
+        if (!auth || !auth.currentUser) {
+            hostStatus.textContent = "Error: Connecting to server...";
+            await signInAnonymously(auth);
+            if (!auth.currentUser) {
+                 hostStatus.textContent = "Error: Could not connect.";
+                 return;
+            }
+        }
+        isHost = true;
+        isMultiplayer = true;
+        currentGamemode = mode;
+        const hostId = auth.currentUser.uid;
+        const gameRef = doc(db, 'games', `game-${Date.now()}`);
+        currentGameId = gameRef.id;
+
+        createDeck(mode);
+
+        const initialGameState = {
+            gameId: currentGameId,
+            hostId: hostId,
+            guestId: null,
+            status: 'waiting',
+            mode: mode,
+            deck: deck,
+            player1Score: 0,
+            player2Score: 0,
+            player1Hand: [],
+            player2Hand: [],
+            player1Status: {},
+            player2Status: {},
+            turn: 'player1',
+            lastAction: { player: 'system', message: 'Game created.' }
+        };
+
+        try {
+            await setDoc(gameRef, initialGameState);
+            hostIdDisplay.textContent = currentGameId;
+            hostStatus.textContent = 'Waiting for opponent...';
+            listenToGameUpdates(currentGameId);
+        } catch (error) {
+            console.error("Failed to host game:", error);
+            hostStatus.textContent = "Error creating game.";
+        }
+    }
+
+    async function joinGame(gameId) {
+        if (!auth || !auth.currentUser) {
+            multiplayerStatus.textContent = "Error: Connecting...";
+            await signInAnonymously(auth);
+            if (!auth.currentUser) {
+                 multiplayerStatus.textContent = "Error: Could not connect.";
+                 return;
+            }
+        }
+        const guestId = auth.currentUser.uid;
+        const gameRef = doc(db, "games", gameId);
+
+        try {
+            multiplayerStatus.textContent = "Connecting...";
+            const gameDoc = await getDoc(gameRef);
+            if (gameDoc.exists() && !gameDoc.data().guestId) {
+                await updateDoc(gameRef, {
+                    guestId: guestId,
+                    status: 'active'
+                });
+                isHost = false;
+                isMultiplayer = true;
+                currentGameId = gameId;
+                listenToGameUpdates(gameId);
+            } else {
+                multiplayerStatus.textContent = "Game not found or is full.";
+            }
+        } catch (error) {
+            console.error("Failed to join game:", error);
+            multiplayerStatus.textContent = "Error joining game.";
+        }
+    }
+
+    function listenToGameUpdates(gameId) {
+        const gameRef = doc(db, 'games', gameId);
+        if (unsubscribeFromGame) unsubscribeFromGame();
+
+        unsubscribeFromGame = onSnapshot(gameRef, (doc) => {
+            const gameData = doc.data();
+            if (!gameData) {
+                showMessage("The game has ended.", "system");
+                returnToMenu();
+                return;
+            }
+
+            if (gameData.status === 'active' && !screens.game.classList.contains('active')) {
+                startGame(gameData.mode, true);
+            }
+            
+            const myPlayerNumber = isHost ? '1' : '2';
+            const opponentPlayerNumber = isHost ? '2' : '1';
+
+            playerScore = gameData[`player${myPlayerNumber}Score`];
+            aiScore = gameData[`player${opponentPlayerNumber}Score`];
+            playerHand = gameData[`player${myPlayerNumber}Hand`];
+            aiHand = gameData[`player${opponentPlayerNumber}Hand`];
+            playerStatus = gameData[`player${myPlayerNumber}Status`];
+            aiStatus = gameData[`player${opponentPlayerNumber}Status`];
+            deck = gameData.deck;
+
+            isPlayerTurn = (isHost && gameData.turn === 'player1') || (!isHost && gameData.turn === 'player2');
+            
+            updateAllUI();
+
+            if (gameData.status === 'finished') {
+                gameIsOver = true;
+                showMessage(gameData.winner === `player${myPlayerNumber}` ? "You Win!" : "You Lose!", "system");
+                endGame();
+            } else {
+                showMessage(isPlayerTurn ? "Your turn." : "Opponent's turn.");
+            }
+            
+            endTurnBtn.disabled = !isPlayerTurn;
+            deckEl.classList.toggle('disabled', !isPlayerTurn);
+        });
+    }
+
+    async function updateFirestoreGame(updatedData) {
+        const gameRef = doc(db, 'games', currentGameId);
+        try {
+            await updateDoc(gameRef, updatedData);
+        } catch (error) {
+            console.error("Failed to update game state:", error);
+        }
+    }
+
+    function playerDrawsMP() {
+        if (!isPlayerTurn || playerHasDrawn) return;
+        playerHasDrawn = true;
+        
+        const myPlayerNumber = isHost ? '1' : '2';
+        const draws = playerStatus.doubledraw ? 2 : 1;
+        const newHand = [...playerHand];
+        let newScore = playerScore;
+        const newDeck = [...deck];
+        
+        let drawnCardsMessage = [];
+
+        for (let i = 0; i < draws; i++) {
+            if (newDeck.length === 0) break;
+            const card = newDeck.pop();
+            drawnCardsMessage.push(card.name);
+            if (card.type === 'aether-shard') {
+                newScore += card.value;
+            } else {
+                if (newHand.length < handSizeLimit) {
+                    newHand.push(card);
+                }
+            }
+        }
+        
+        const updates = {
+            deck: newDeck,
+            [`player${myPlayerNumber}Hand`]: newHand,
+            [`player${myPlayerNumber}Score`]: newScore,
+            lastAction: { player: myPlayerNumber, message: `drew ${drawnCardsMessage.join(', ')}` }
+        };
+        updateFirestoreGame(updates);
+    }
+    
+    function playActionCardMP(card, index) {
+        if (!isPlayerTurn || actionCardPlayedThisTurn) return;
+        actionCardPlayedThisTurn = true;
+
+        // Simplified logic for this example
+        const myPlayerNumber = isHost ? '1' : '2';
+        const opponentPlayerNumber = isHost ? '2' : '1';
+        
+        const newHand = [...playerHand];
+        newHand.splice(index, 1);
+        
+        let updates = {
+            [`player${myPlayerNumber}Hand`]: newHand,
+            lastAction: { player: myPlayerNumber, message: `played ${card.name}` }
+        };
+
+        // This is a highly simplified action handler for multiplayer
+        if (card.action === 'attack') {
+            const gameDocRef = doc(db, 'games', currentGameId);
+            getDoc(gameDocRef).then(doc => {
+                const currentOpponentScore = doc.data()[`player${opponentPlayerNumber}Score`];
+                updates[`player${opponentPlayerNumber}Score`] = currentOpponentScore - card.value;
+                updateFirestoreGame(updates);
+            });
+        } else {
+             updateFirestoreGame(updates);
+        }
+    }
+
+    function endPlayerTurnMP() {
+        if (!isPlayerTurn) return;
+        const nextTurn = isHost ? 'player2' : 'player1';
+        playerHasDrawn = false;
+        actionCardPlayedThisTurn = false;
+        updateFirestoreGame({ 
+            turn: nextTurn,
+            lastAction: { player: isHost ? '1' : '2', message: 'ended their turn.' }
+        });
+    }
+
+
+    // --- EVENT LISTENERS ---
+    singlePlayerBtn.addEventListener('click', () => {
+        isMultiplayer = false;
+        isHost = false;
+        showScreen('gamemode');
+    });
+    multiplayerBtn.addEventListener('click', () => {
+        if (!auth) {
+            alert("Multiplayer is unavailable. Firebase connection failed.");
+            return;
+        }
+        showScreen('multiplayer');
+    });
+    fullGlossaryBtn.addEventListener('click', () => {
+        populateFullGlossary();
+        showScreen('fullGlossary');
+    });
+    closeFullGlossaryBtn.addEventListener('click', () => showScreen('menu'));
+    
+    hostGameBtn.addEventListener('click', () => {
+        isMultiplayer = true;
+        isHost = true;
+        showScreen('gamemode');
+    });
+    joinGameScreenBtn.addEventListener('click', () => {
+        isMultiplayer = true;
+        isHost = false;
+        showScreen('join');
+    });
+    connectBtn.addEventListener('click', () => {
+        const gameId = peerIdInput.value.trim();
+        if (gameId) {
+            joinGame(gameId);
+        } else {
+            multiplayerStatus.textContent = 'Please enter a valid Game ID.';
+        }
+    });
+
+    hostIdDisplay.addEventListener('click', () => {
+        if (hostIdDisplay.textContent.includes('...')) return;
+        navigator.clipboard.writeText(hostIdDisplay.textContent).then(() => {
+            hostStatus.textContent = 'ID Copied!';
+            setTimeout(() => { 
+                if(hostStatus.textContent === 'ID Copied!') {
+                    hostStatus.textContent = 'Waiting for opponent...';
+                }
+            }, 2000);
+        });
+    });
+
+    backToMenuBtn.addEventListener('click', returnToMenu);
+    backToMultiplayerMenuBtn.addEventListener('click', () => showScreen('multiplayer'));
+    cancelHostBtn.addEventListener('click', returnToMenu);
+    gamemodeBackBtn.addEventListener('click', () => {
+        if (isMultiplayer) {
+            showScreen('multiplayer');
+        } else {
+            showScreen('menu');
+        }
+    });
+
+    gamemodeButtonsContainer.addEventListener('click', (event) => {
+        const clickedButton = event.target.closest('.gamemode-button');
+        if (!clickedButton) return;
+
+        const mode = clickedButton.dataset.mode;
+        if (!mode) return;
+
+        if (isMultiplayer && isHost) {
+            showScreen('host');
+            hostGame(mode);
+        } else {
+            startGame(mode, false);
+        }
+    });
+
+    deckEl.addEventListener('click', playerDraws);
+    endTurnBtn.addEventListener('click', endPlayerTurn);
+    quitGameBtn.addEventListener('click', returnToMenu);
+    playAgainBtn.addEventListener('click', () => startGame(currentGamemode, false));
+    mainMenuBtn.addEventListener('click', returnToMenu);
+    glossaryToggleBtn.addEventListener('click', () => {
+        const isOpen = sideGlossaryEl.classList.toggle('open');
+        glossaryToggleBtn.classList.toggle('open', isOpen);
+        gameContainer.classList.toggle('menu-open', isOpen);
+    });
+
+    // --- INITIALIZE ---
+    showScreen('menu');
+});
+</script>
+</body>
+</html>
